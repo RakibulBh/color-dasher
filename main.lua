@@ -9,6 +9,8 @@ local colour_display = map:FindFirstChild("ChosenColour")
 local INTERMISSION_TIME = 5
 local COLOURS_NUM = 10
 
+local playing_players = {}
+
 local colours = {
 	Color3.fromRGB(255, 0, 0),
 	Color3.fromRGB(0,255, 0),
@@ -17,11 +19,26 @@ local colours = {
 	Color3.fromRGB(0, 255, 255)
 }
 
-local function teleportPlayers(spawns)
+local function teleportPlayers(spawns, isGame)
 	for _, player in ipairs(game.Players:GetPlayers()) do
 		local character = player.Character
 		if character and character:FindFirstChild("HumanoidRootPart") then
 			local randomSpawn = spawns[math.random(1, #spawns)]
+			if isGame then
+				playing_players[player.UserId] = player
+				local humanoid = character:WaitForChild("Humanoid")
+				print(playing_players)
+				humanoid.Died:Connect(function()
+					if playing_players[player.UserId] then
+						playing_players[player.UserId] = nil
+						print(playing_players)
+					end
+				end)
+			else
+				if playing_players[player.UserId] then
+					playing_players[player.UserId] = nil
+				end
+			end
 			character.HumanoidRootPart.CFrame = randomSpawn.CFrame
 		end
 	end
@@ -73,7 +90,7 @@ while true do
 	end
 
 	-- Teleport players to map
-	teleportPlayers(mapSpawns)
+	teleportPlayers(mapSpawns, true)
 	
 	Status.Value = "Get ready for the tiles to change colour!"
 	
@@ -91,6 +108,8 @@ while true do
 	end
 
 	-- Teleport players back to lobby
-	teleportPlayers(lobbySpawns)
+	teleportPlayers(lobbySpawns, false)
 end
+
+
 
